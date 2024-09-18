@@ -6,8 +6,22 @@ Command: npx gltfjsx@6.5.0 .\public\model\66e9374104eba267d2af0762.glb -o src/co
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useAnimations, useFBX, useGLTF } from "@react-three/drei";
 import { useControls } from "leva";
+import { useFrame, useLoader } from "@react-three/fiber";
+import * as THREE from "three";
 
 export function Avatar(props) {
+  const corresponding = {
+    A: "viseme_PP", // Closed mouth for "P", "B", "M"
+    B: "viseme_DD", // Slightly open mouth with clenched teeth for "K", "S", "T"
+    C: "viseme_E", // Open mouth for vowels like "EH", "AE"
+    D: "viseme_aa", // Wide open mouth for "AA"
+    E: "viseme_O", // Slightly rounded mouth for "AO", "ER"
+    F: "viseme_U", // Puckered lips for "UW", "OW", "W"
+    G: "viseme_FF", // Upper teeth touching lower lip for "F", "V"
+    H: "viseme_TH", // Tongue raised behind upper teeth for "L"
+    X: "viseme_sil", // Idle position for pauses
+  };
+
   const { playAudio, script } = useControls({
     playAudio: false,
     script: {
@@ -17,10 +31,47 @@ export function Avatar(props) {
   });
 
   const audio = useMemo(() => new Audio(`/audios/${script}.mp3`), [script]);
+  const jsonFile = useLoader(THREE.FileLoader, `audios/${script}.json`);
+  const lipSync = JSON.parse(jsonFile);
+
+  useFrame(() => {
+    const currentAudio = audio.currentTime;
+
+    if (audio.paused || audio.ended) {
+      setAnimation("Idle");
+    }
+    Object.values(corresponding).forEach((value) => {
+      nodes.Wolf3D_Head.morphTargetInfluences[
+        nodes.Wolf3D_Head.morphTargetDictionary[value]
+      ] = 0;
+      nodes.Wolf3D_Teeth.morphTargetInfluences[
+        nodes.Wolf3D_Teeth.morphTargetDictionary[value]
+      ] = 0;
+    });
+
+    for (let i = 0; i < lipSync.mouthCues.length; i++) {
+      let mouthCue = lipSync.mouthCues[i];
+      if (currentAudio >= mouthCue.start && currentAudio <= mouthCue.end) {
+        nodes.Wolf3D_Head.morphTargetInfluences[
+          nodes.Wolf3D_Head.morphTargetDictionary[corresponding[mouthCue.value]]
+        ] = 1;
+        nodes.Wolf3D_Teeth.morphTargetInfluences[
+          nodes.Wolf3D_Teeth.morphTargetDictionary[
+            corresponding[mouthCue.value]
+          ]
+        ] = 1;
+      }
+    }
+  });
 
   useEffect(() => {
     if (playAudio) {
       audio.play();
+      if (script === "ChattyToaster") {
+        setAnimation("Greeting");
+      } else {
+        setAnimation("Angry");
+      }
     } else {
       audio.pause();
     }
@@ -29,13 +80,11 @@ export function Avatar(props) {
   const { nodes, materials } = useGLTF("/models/66e9374104eba267d2af0762.glb");
   const { animations: idleAnimation } = useFBX("/animations/Idle.fbx");
   const { animations: angryAnimation } = useFBX(
-    "/animations/Angry Gesture.fbx"
+    "/animations/Angry%20Gesture.fbx"
   );
   const { animations: greetingAnimation } = useFBX(
-    "/animations/Standing Greeting.fbx"
+    "/animations/Standing%20Greeting.fbx"
   );
-
-  console.log(idleAnimation);
 
   idleAnimation[0].name = "Idle";
   angryAnimation[0].name = "Angry";
