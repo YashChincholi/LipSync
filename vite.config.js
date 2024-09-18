@@ -5,4 +5,5 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   base: "/LipSync/",
   plugins: [react()],
+  assetsInclude: ['**/*.jpeg', '**/*.png', '**/*.jpg', '**/*.webp', '**/*.glb']
 });
