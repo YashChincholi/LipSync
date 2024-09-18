@@ -25,7 +25,7 @@ export function Avatar(props) {
   const { playAudio, script } = useControls({
     playAudio: false,
     script: {
-      value: "BreakfastBandit",
+      value: "ChattyToaster",
       options: ["BreakfastBandit", "ChattyToaster"],
     },
   });
@@ -70,7 +70,7 @@ export function Avatar(props) {
       if (script === "ChattyToaster") {
         setAnimation("Greeting");
       } else {
-        setAnimation("Angry");
+        setAnimation("Idle");
       }
     } else {
       audio.pause();
@@ -90,7 +90,7 @@ export function Avatar(props) {
   angryAnimation[0].name = "Angry";
   greetingAnimation[0].name = "Greeting";
 
-  const [animation, setAnimation] = useState("Idle");
+  const [animation, setAnimation] = useState("Angry");
 
   const group = useRef();
   const { actions } = useAnimations(
